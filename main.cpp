@@ -10,6 +10,23 @@ std::atomic<int> modulo(9);      // Modulo value (default: 9)
 std::atomic<bool> running(true); // Controls program execution
 std::atomic<int> power(1);       // Power to be reset when new input is given
 
+// Modular exponentiation for efficiency
+int modularExponentiation(int base, int exponent, int mod)
+{
+    int result = 1;
+    base = base % mod;
+    while (exponent > 0)
+    {
+        if (exponent % 2 == 1)
+        { // If exponent is odd
+            result = (result * base) % mod;
+        }
+        exponent = exponent >> 1; // Divide exponent by 2
+        base = (base * base) % mod;
+    }
+    return result;
+}
+
 // Function to generate and display the modular harmonic sequence
 void displayHarmonics()
 {
