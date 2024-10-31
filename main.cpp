@@ -2,7 +2,6 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
-#include <cmath>
 
 // Global atomic variables to allow for thread-safe user input adjustments
 std::atomic<int> base(2);        // Base for the sequence (default: 2)
@@ -30,17 +29,16 @@ int modularExponentiation(int base, int exponent, int mod)
 // Function to generate and display the modular harmonic sequence
 void displayHarmonics()
 {
-    int power = 1; // Start with 2^1 (or base^1)
-
     while (running)
     {
-        int result = static_cast<int>(pow(base.load(), power)) % modulo.load();
+        int currentPower = power.load();
+        int result = modularExponentiation(base.load(), currentPower, modulo.load());
 
         // Display the current term in the harmonic sequence
-        std::cout << "Term " << power << ": " << result << std::endl;
+        std::cout << "Term " << currentPower << ": " << result << std::endl;
 
         // Increment power for next term in sequence
-        power++;
+        power = currentPower + 1;
 
         // Delay for readability, allowing the user time to see changes in real time
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
