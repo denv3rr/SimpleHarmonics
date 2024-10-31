@@ -2,12 +2,15 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <mutex>
 
 // Global atomic variables to allow for thread-safe user input adjustments
 std::atomic<int> base(2);        // Base for the sequence (default: 2)
 std::atomic<int> modulo(9);      // Modulo value (default: 9)
 std::atomic<bool> running(true); // Controls program execution
 std::atomic<int> power(1);       // Power to be reset when new input is given
+
+std::mutex inputMutex; // Mutex to prevent simulataneous access to input/output stream
 
 // Modular exponentiation for efficiency
 int modularExponentiation(int base, int exponent, int mod)
@@ -31,6 +34,9 @@ void displayHarmonics()
 {
     while (running)
     {
+        // Lock the input mutex to prevent overlapping output
+        std::lock_guard<std::mutex> lock(inputMutex);
+
         int currentPower = power.load();
         int result = modularExponentiation(base.load(), currentPower, modulo.load());
 
@@ -50,10 +56,10 @@ void handleUserInput()
 {
     while (running)
     {
-        std::cout << "\n--- Control Menu ---" << std::endl;
-        std::cout << "1. Set new base (current: " << base << ")" << std::endl;
-        std::cout << "2. Set new modulo (current: " << modulo << ")" << std::endl;
-        std::cout << "3. Exit program" << std::endl;
+        std::cout << "\n--- Control Menu ---\n";
+        std::cout << "1. Set new base (current: " << base << ")\n";
+        std::cout << "2. Set new modulo (current: " << modulo << ")\n";
+        std::cout << "3. Exit program\n";
         std::cout << "Select an option: ";
 
         int choice;
@@ -67,7 +73,8 @@ void handleUserInput()
             std::cout << "Enter new base: ";
             std::cin >> newBase;
             base = newBase;
-            std::cout << "Base updated to " << base.load() << std::endl;
+            power = 1; // Reset power to restart the sequence
+            std::cout << "Base updated to " << base.load() << "\n";
             break;
         }
         case 2:
@@ -76,15 +83,16 @@ void handleUserInput()
             std::cout << "Enter new modulo: ";
             std::cin >> newModulo;
             modulo = newModulo;
-            std::cout << "Modulo updated to " << modulo.load() << std::endl;
+            power = 1; // Reset power to restart the sequence
+            std::cout << "Modulo updated to " << modulo.load() << "\n";
             break;
         }
         case 3:
             running = false; // Signal to end program
-            std::cout << "Exiting program..." << std::endl;
+            std::cout << "Exiting program..." << "\n";
             break;
         default:
-            std::cout << "Invalid option. Please try again." << std::endl;
+            std::cout << "Invalid option. Please try again." << "\n";
         }
     }
 }
@@ -102,6 +110,6 @@ int main()
     // Wait for display thread to finish before closing the program
     displayThread.join();
 
-    std::cout << "Program terminated." << std::endl;
+    std::cout << "Program terminated." << "\n";
     return 0;
 }
