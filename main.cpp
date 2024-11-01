@@ -11,14 +11,12 @@
 std::atomic<bool> running(true);          // Controls program execution
 std::atomic<bool> sequenceRunning(false); // Controls display sequence and loading bar
 
-mpz_class base = 2;   // Base for the sequence (default: 2)
-mpz_class modulo = 9; // Modulo value (default: 9)
-mpz_class power = 1;  // Power level to reset on input
-
+mpz_class base = 2;     // Base for the sequence (default: 2)
+mpz_class modulo = 9;   // Modulo value (default: 9)
 std::mutex outputMutex; // Mutex for managing console output
 
-// Example pattern sequence; modify this to use your specific sequence pattern
-std::vector<mpz_class> sequencePattern = {1, 2, 4, 7, 8, 5}; // A sample predefined sequence
+// Define the sequence pattern to repeat
+std::vector<mpz_class> sequencePattern = {2, 4, 8, 7, 5, 1}; // Default sequence pattern
 
 // Modular exponentiation function using GMP's mpz_class
 mpz_class modularExponentiation(mpz_class base, mpz_class exponent, mpz_class mod)
@@ -28,7 +26,7 @@ mpz_class modularExponentiation(mpz_class base, mpz_class exponent, mpz_class mo
     return result;
 }
 
-// Function to display the modular harmonic sequence and loading bar
+// Function to display the modular harmonic sequence in a looping pattern
 void displayHarmonics()
 {
     int patternIndex = 0;
@@ -41,21 +39,39 @@ void displayHarmonics()
             continue;
         }
 
-        mpz_class currentPower = power;
-        mpz_class result = modularExponentiation(base, currentPower, modulo);
+        mpz_class result = sequencePattern[patternIndex];
 
         {
             std::lock_guard<std::mutex> lock(outputMutex);
-            // Print term
-            std::cout << "Term " << currentPower << ": " << result << std::endl;
+            std::cout << "\rTerm " << (patternIndex + 1) << ": " << result << "                              " << std::endl;
+        }
 
-            // Calculate progress based on the position in the sequencePattern
-            int progressPercentage = (patternIndex * 100) / patternLength;
+        patternIndex = (patternIndex + 1) % patternLength; // Repeat sequence pattern
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+}
 
-            // Print loading bar
-            int barWidth = 30;
-            int pos = (progressPercentage * barWidth) / 100;
-            std::cout << "\rSequence state:\n[";
+// Loading bar function based on the sequence position
+void displayLoadingBar()
+{
+    int patternIndex = 0;
+    int patternLength = sequencePattern.size();
+
+    while (running)
+    {
+        if (!sequenceRunning)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            continue;
+        }
+
+        int progressPercentage = (patternIndex * 100) / patternLength;
+        int barWidth = 30;
+        int pos = (progressPercentage * barWidth) / 100;
+
+        {
+            std::lock_guard<std::mutex> lock(outputMutex);
+            std::cout << "\rSequence state: [";
             for (int i = 0; i < barWidth; ++i)
             {
                 if (i < pos)
@@ -65,13 +81,11 @@ void displayHarmonics()
                 else
                     std::cout << " ";
             }
-            std::cout << "] " << progressPercentage << " %" << std::flush;
-
-            // Update pattern index to cycle through the sequencePattern
-            patternIndex = (patternIndex + 1) % patternLength;
+            std::cout << "] " << progressPercentage << " %                   \r";
+            std::cout.flush();
         }
 
-        power = currentPower + 1;
+        patternIndex = (patternIndex + 1) % patternLength; // Keep the loading bar aligned with the sequence
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
@@ -115,7 +129,6 @@ void handleUserInput()
             if (std::cin >> newBase)
             {
                 base = mpz_class(newBase);
-                power = 1;
                 std::cout << "Base updated to " << base << std::endl;
             }
             else
@@ -134,7 +147,6 @@ void handleUserInput()
             if (std::cin >> newModulo)
             {
                 modulo = mpz_class(newModulo);
-                power = 1;
                 std::cout << "Modulo updated to " << modulo << std::endl;
             }
             else
@@ -173,12 +185,14 @@ int main()
 {
     std::cout << "Starting harmonic sequence...\n";
 
-    // Start display and input threads
+    // Start display and loading bar threads
     std::thread displayThread(displayHarmonics);
+    std::thread loadingBarThread(displayLoadingBar);
     std::thread inputThread(handleUserInput);
 
     // Wait for threads to finish before closing the program
     displayThread.join();
+    loadingBarThread.join();
     inputThread.join();
 
     std::cout << "Program terminated.\n";
