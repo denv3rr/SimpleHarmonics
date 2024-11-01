@@ -3,19 +3,22 @@
 #include <atomic>
 #include <chrono>
 #include <mutex>
+#include <vector>
 #include <limits>
 #include <gmpxx.h> // GMP C++ interface for arbitrary precision integers
 
 // Global atomic variables for thread-safe operations
-std::atomic<bool> running(true);    // Controls program execution
-std::atomic<bool> paused(true);     // Initially pauses the display sequence and loading bar
-std::atomic<int> sequenceLength(0); // Tracks the number of terms in the current sequence
+std::atomic<bool> running(true);          // Controls program execution
+std::atomic<bool> sequenceRunning(false); // Controls display sequence and loading bar
 
 mpz_class base = 2;   // Base for the sequence (default: 2)
 mpz_class modulo = 9; // Modulo value (default: 9)
 mpz_class power = 1;  // Power level to reset on input
 
 std::mutex outputMutex; // Mutex for managing console output
+
+// Example pattern sequence; modify this to use your specific sequence pattern
+std::vector<mpz_class> sequencePattern = {1, 2, 4, 7, 8, 5}; // A sample predefined sequence
 
 // Modular exponentiation function using GMP's mpz_class
 mpz_class modularExponentiation(mpz_class base, mpz_class exponent, mpz_class mod)
@@ -25,67 +28,51 @@ mpz_class modularExponentiation(mpz_class base, mpz_class exponent, mpz_class mo
     return result;
 }
 
-// Function to generate and display the modular harmonic sequence
+// Function to display the modular harmonic sequence and loading bar
 void displayHarmonics()
 {
+    int patternIndex = 0;
+    int patternLength = sequencePattern.size();
     while (running)
     {
-        if (!paused)
-        {
-            mpz_class currentPower = power;
-            mpz_class result = modularExponentiation(base, currentPower, modulo);
-
-            {
-                std::lock_guard<std::mutex> lock(outputMutex);
-                std::cout << "Term " << currentPower << ": " << result << std::endl;
-            }
-
-            sequenceLength = static_cast<int>(currentPower.get_ui());
-            power = currentPower + 1;
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
-        else
+        if (!sequenceRunning)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            continue;
         }
-    }
-}
 
-// Loading bar function based on the sequence position
-void displayLoadingBar()
-{
-    while (running)
-    {
-        if (!paused)
+        mpz_class currentPower = power;
+        mpz_class result = modularExponentiation(base, currentPower, modulo);
+
         {
-            int progress;
+            std::lock_guard<std::mutex> lock(outputMutex);
+            // Print term
+            std::cout << "Term " << currentPower << ": " << result << std::endl;
+
+            // Calculate progress based on the position in the sequencePattern
+            int progressPercentage = (patternIndex * 100) / patternLength;
+
+            // Print loading bar
             int barWidth = 30;
-
-            progress = static_cast<int>(power.get_ui()) % sequenceLength.load();
-            int pos = (progress * barWidth) / sequenceLength.load();
-
+            int pos = (progressPercentage * barWidth) / 100;
+            std::cout << "\rSequence state:\n[";
+            for (int i = 0; i < barWidth; ++i)
             {
-                std::lock_guard<std::mutex> lock(outputMutex);
-                std::cout << "[";
-                for (int i = 0; i < barWidth; ++i)
-                {
-                    if (i < pos)
-                        std::cout << "=";
-                    else if (i == pos)
-                        std::cout << ">";
-                    else
-                        std::cout << " ";
-                }
-                std::cout << "] " << int((float(progress) / sequenceLength) * 100.0) << " %\r";
-                std::cout.flush();
+                if (i < pos)
+                    std::cout << "=";
+                else if (i == pos)
+                    std::cout << ">";
+                else
+                    std::cout << " ";
             }
+            std::cout << "] " << progressPercentage << " %" << std::flush;
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // Update pattern index to cycle through the sequencePattern
+            patternIndex = (patternIndex + 1) % patternLength;
         }
-        else
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
+
+        power = currentPower + 1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
@@ -94,14 +81,14 @@ void handleUserInput()
 {
     while (running)
     {
-        paused = true; // Pause sequence and loading bar
-
         {
             std::lock_guard<std::mutex> lock(outputMutex);
-            std::cout << "\n--- Control Menu ---\n";
+            std::cout << "\n\n--- Control Menu ---\n";
             std::cout << "1. Set new base (current: " << base << ")\n";
             std::cout << "2. Set new modulo (current: " << modulo << ")\n";
-            std::cout << "3. Exit program\n";
+            std::cout << "3. Start sequence\n";
+            std::cout << "4. Stop sequence\n";
+            std::cout << "5. Exit program\n";
             std::cout << "Select an option: ";
             std::cout.flush();
         }
@@ -159,36 +146,39 @@ void handleUserInput()
             break;
         }
         case 3:
+            sequenceRunning = true; // Start sequence and loading bar
+            std::cout << "Sequence started.\n";
+            break;
+        case 4:
+            sequenceRunning = false; // Stop sequence and loading bar
+            std::cout << "Sequence stopped.\n";
+            break;
+        case 5:
             running = false;
+            sequenceRunning = false;
             {
                 std::lock_guard<std::mutex> lock(outputMutex);
                 std::cout << "Exiting program..." << std::endl;
             }
-            paused = false;
             return;
         default:
             std::cout << "Invalid option. Please try again." << std::endl;
         }
 
-        paused = false;
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 
 int main()
 {
-    paused = true; // Start with the sequence and loading bar paused
-
     std::cout << "Starting harmonic sequence...\n";
 
-    // Start display and loading bar threads
+    // Start display and input threads
     std::thread displayThread(displayHarmonics);
-    std::thread loadingBarThread(displayLoadingBar);
     std::thread inputThread(handleUserInput);
 
     // Wait for threads to finish before closing the program
     displayThread.join();
-    loadingBarThread.join();
     inputThread.join();
 
     std::cout << "Program terminated.\n";
