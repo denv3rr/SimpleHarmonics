@@ -4,6 +4,7 @@
 #include <chrono>
 #include <mutex>
 #include <vector>
+#include <set>
 #include <limits>
 #include <gmpxx.h> // GMP C++ interface for arbitrary precision integers
 
@@ -11,12 +12,10 @@
 std::atomic<bool> running(true);          // Controls program execution
 std::atomic<bool> sequenceRunning(false); // Controls display sequence and loading bar
 
-mpz_class base = 2;     // Base for the sequence (default: 2)
-mpz_class modulo = 9;   // Modulo value (default: 9)
-std::mutex outputMutex; // Mutex for managing console output
-
-// Define the sequence pattern to repeat
-std::vector<mpz_class> sequencePattern = {2, 4, 8, 7, 5, 1}; // Default sequence pattern
+mpz_class base = 2;                     // Base for the sequence (default: 2)
+mpz_class modulo = 9;                   // Modulo value (default: 9)
+std::vector<mpz_class> sequencePattern; // Dynamic sequence pattern based on base and modulo
+std::mutex outputMutex;                 // Mutex for managing console output
 
 // Modular exponentiation function using GMP's mpz_class
 mpz_class modularExponentiation(mpz_class base, mpz_class exponent, mpz_class mod)
@@ -26,47 +25,68 @@ mpz_class modularExponentiation(mpz_class base, mpz_class exponent, mpz_class mo
     return result;
 }
 
+// Function to dynamically generate the sequence pattern based on the base and modulo values
+void generateSequencePattern()
+{
+    sequencePattern.clear();
+    std::set<mpz_class> seen; // Track seen values to detect cycles
+    mpz_class current = base;
+    int exponent = 1;
+
+    while (seen.find(current) == seen.end())
+    {
+        sequencePattern.push_back(current);
+        seen.insert(current);
+        current = modularExponentiation(base, ++exponent, modulo);
+    }
+
+    // Display the generated sequence pattern
+    std::lock_guard<std::mutex> lock(outputMutex);
+    std::cout << "Generated sequence pattern: ";
+    for (const auto &term : sequencePattern)
+    {
+        std::cout << term << " ";
+    }
+    std::cout << std::endl;
+}
+
 // Function to display the modular harmonic sequence in a looping pattern
 void displayHarmonics()
 {
     int patternIndex = 0;
-    int patternLength = sequencePattern.size();
     while (running)
     {
-        if (!sequenceRunning)
+        if (!sequenceRunning || sequencePattern.empty())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             continue;
         }
 
-        mpz_class result = sequencePattern[patternIndex];
-
         {
             std::lock_guard<std::mutex> lock(outputMutex);
-            std::cout << "\rTerm " << (patternIndex + 1) << ": " << result << "                              " << std::endl;
+            std::cout << "\rTerm " << (patternIndex + 1) << ": " << sequencePattern[patternIndex]
+                      << "                              \n";
         }
 
-        patternIndex = (patternIndex + 1) % patternLength; // Repeat sequence pattern
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        patternIndex = (patternIndex + 1) % sequencePattern.size();  // Loop over sequence pattern
+        std::this_thread::sleep_for(std::chrono::milliseconds(800)); // Slightly longer sleep for clear output
     }
 }
 
 // Loading bar function based on the sequence position
 void displayLoadingBar()
 {
-    int patternIndex = 0;
-    int patternLength = sequencePattern.size();
-
+    int barWidth = 30;
+    int patternIndex = 0; // Track sequence position for the loading bar
     while (running)
     {
-        if (!sequenceRunning)
+        if (!sequenceRunning || sequencePattern.empty())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             continue;
         }
 
-        int progressPercentage = (patternIndex * 100) / patternLength;
-        int barWidth = 30;
+        int progressPercentage = (100 * patternIndex) / sequencePattern.size();
         int pos = (progressPercentage * barWidth) / 100;
 
         {
@@ -85,8 +105,8 @@ void displayLoadingBar()
             std::cout.flush();
         }
 
-        patternIndex = (patternIndex + 1) % patternLength; // Keep the loading bar aligned with the sequence
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        patternIndex = (patternIndex + 1) % sequencePattern.size();  // Loop through pattern
+        std::this_thread::sleep_for(std::chrono::milliseconds(600)); // Reduced refresh to avoid overlap
     }
 }
 
@@ -158,8 +178,16 @@ void handleUserInput()
             break;
         }
         case 3:
-            sequenceRunning = true; // Start sequence and loading bar
-            std::cout << "Sequence started.\n";
+            generateSequencePattern(); // Update sequence pattern based on new base and modulo
+            if (!sequencePattern.empty())
+            {                           // Ensure the pattern is valid before starting
+                sequenceRunning = true; // Start sequence and loading bar
+                std::cout << "Sequence started.\n";
+            }
+            else
+            {
+                std::cout << "Error: Generated sequence pattern is empty. Check base and modulo.\n";
+            }
             break;
         case 4:
             sequenceRunning = false; // Stop sequence and loading bar
