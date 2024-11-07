@@ -1,21 +1,27 @@
 #include <iostream>
-#include <thread>
-#include <atomic>
-#include <chrono>
-#include <mutex>
 #include <vector>
 #include <set>
 #include <limits>
-#include <gmpxx.h> // GMP C++ interface for arbitrary precision integers
+#include <thread>
+#include <chrono>
+#include <gmpxx.h>
+#include <iomanip> // For std::setw and formatting output
+#include <conio.h> // For non-blocking key input in Windows
 
-// Global atomic variables for thread-safe operations
-std::atomic<bool> running(true);          // Controls program execution
-std::atomic<bool> sequenceRunning(false); // Controls display sequence and loading bar
+// Global Variables for Sequence and User Controls
+mpz_class base = 2;
+mpz_class modulo = 9;
+std::vector<mpz_class> sequencePattern;
+bool running = true;
+bool sequenceRunning = false;
+bool showLoadingBar = true;
+bool animationRunning = false;
+int animationSpeed = 50; // Set speed of animation (in milliseconds per update)
 
-mpz_class base = 2;                     // Base for the sequence (default: 2)
-mpz_class modulo = 9;                   // Modulo value (default: 9)
-std::vector<mpz_class> sequencePattern; // Dynamic sequence pattern based on base and modulo
-std::mutex outputMutex;                 // Mutex for managing console output
+// Forward Declarations
+void displayLoadingBar(int progress, int total);
+void displayAnimation();
+void handleSettingsMenu();
 
 // Modular exponentiation function using GMP's mpz_class
 mpz_class modularExponentiation(mpz_class base, mpz_class exponent, mpz_class mod)
@@ -25,117 +31,126 @@ mpz_class modularExponentiation(mpz_class base, mpz_class exponent, mpz_class mo
     return result;
 }
 
-// Function to dynamically generate the sequence pattern based on the base and modulo values
+// Function to generate the sequence pattern dynamically based on current base and modulo
 void generateSequencePattern()
 {
     sequencePattern.clear();
-    std::set<mpz_class> seen; // Track seen values to detect cycles
-    mpz_class current = base;
-    int exponent = 1;
+    std::set<mpz_class> seen;
+    mpz_class currentValue = base;
+    int i = 1;
 
-    while (seen.find(current) == seen.end())
+    while (true)
     {
-        sequencePattern.push_back(current);
-        seen.insert(current);
-        current = modularExponentiation(base, ++exponent, modulo);
+        currentValue = modularExponentiation(base, i++, modulo);
+        if (seen.count(currentValue) > 0)
+            break;
+        seen.insert(currentValue);
+        sequencePattern.push_back(currentValue);
     }
 
-    // Display the generated sequence pattern
-    std::lock_guard<std::mutex> lock(outputMutex);
-    std::cout << "Generated sequence pattern: ";
-    for (const auto &term : sequencePattern)
+    std::cout << "\nGenerated Sequence Pattern:\n";
+    for (size_t idx = 0; idx < sequencePattern.size(); ++idx)
     {
-        std::cout << term << " ";
+        std::cout << "Term " << idx + 1 << ": " << sequencePattern[idx];
+        if (showLoadingBar)
+        {
+            displayLoadingBar(idx + 1, sequencePattern.size());
+        }
+        std::cout << "\n";
     }
-    std::cout << std::endl;
+    sequenceRunning = false;
 }
 
-// Function to display the modular harmonic sequence in a looping pattern
-void displayHarmonics()
-{
-    int patternIndex = 0;
-    while (running)
-    {
-        if (!sequenceRunning || sequencePattern.empty())
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            continue;
-        }
-
-        {
-            std::lock_guard<std::mutex> lock(outputMutex);
-            std::cout << "\rTerm " << (patternIndex + 1) << ": " << sequencePattern[patternIndex]
-                      << "                              \n";
-        }
-
-        patternIndex = (patternIndex + 1) % sequencePattern.size();  // Loop over sequence pattern
-        std::this_thread::sleep_for(std::chrono::milliseconds(800)); // Slightly longer sleep for clear output
-    }
-}
-
-// Loading bar function based on the sequence position
-void displayLoadingBar()
+// Loading bar function for visual feedback
+void displayLoadingBar(int progress, int total)
 {
     int barWidth = 30;
-    int patternIndex = 0; // Track sequence position for the loading bar
-    while (running)
+    int pos = (progress * barWidth) / total;
+
+    std::cout << " [";
+    for (int i = 0; i < barWidth; ++i)
     {
-        if (!sequenceRunning || sequencePattern.empty())
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            continue;
-        }
-
-        int progressPercentage = (100 * patternIndex) / sequencePattern.size();
-        int pos = (progressPercentage * barWidth) / 100;
-
-        {
-            std::lock_guard<std::mutex> lock(outputMutex);
-            std::cout << "\rSequence state: [";
-            for (int i = 0; i < barWidth; ++i)
-            {
-                if (i < pos)
-                    std::cout << "=";
-                else if (i == pos)
-                    std::cout << ">";
-                else
-                    std::cout << " ";
-            }
-            std::cout << "] " << progressPercentage << " %                   \r";
-            std::cout.flush();
-        }
-
-        patternIndex = (patternIndex + 1) % sequencePattern.size();  // Loop through pattern
-        std::this_thread::sleep_for(std::chrono::milliseconds(600)); // Reduced refresh to avoid overlap
+        if (i < pos)
+            std::cout << "\033[32m=\033[0m";
+        else if (i == pos)
+            std::cout << "\033[32m>\033[0m";
+        else
+            std::cout << " ";
     }
+    std::cout << "] " << (100 * progress) / total << "% ";
+    std::cout.flush();
 }
 
-// Function to handle user input in a separate thread
+// Function to animate the wave pattern using the sequence in memory
+void displayAnimation()
+{
+    animationRunning = true;
+    int direction = 1; // Forward direction
+    int index = 0;
+    const int termLabelWidth = 10; // Adjust to fit longest label ("Term X:")
+    const int valueWidth = 10;     // Adjust to fit largest value
+
+    while (animationRunning)
+    {
+        system("CLS"); // Clear console for a clean frame
+
+        for (size_t idx = 0; idx < sequencePattern.size(); ++idx)
+        {
+            std::cout << std::left << std::setw(termLabelWidth)
+                      << ("Term " + std::to_string(idx + 1) + ":");
+            std::cout << std::setw(valueWidth) << sequencePattern[idx];
+
+            if (idx == index && showLoadingBar)
+            {
+                displayLoadingBar(idx + 1, sequencePattern.size()); // Active term shows progress
+            }
+            else if (showLoadingBar)
+            {
+                std::cout << " []"; // Empty status bar when not selected
+            }
+
+            std::cout << "\n";
+        }
+
+        // Add reminder at the bottom of the console
+        std::cout << "\nPress '4' and Enter to stop the animation...\n";
+
+        index += direction;
+
+        // Reverse direction at boundaries
+        if (index == sequencePattern.size() - 1 || index == 0)
+        {
+            direction = -direction;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(animationSpeed));
+    }
+
+    std::cout << "\n\n\033[31mAnimation stopped.\033[0m\n\n";
+}
+
+// Function to handle user input and control flow
 void handleUserInput()
 {
     while (running)
     {
-        {
-            std::lock_guard<std::mutex> lock(outputMutex);
-            std::cout << "\n\n--- Control Menu ---\n";
-            std::cout << "1. Set new base (current: " << base << ")\n";
-            std::cout << "2. Set new modulo (current: " << modulo << ")\n";
-            std::cout << "3. Start sequence\n";
-            std::cout << "4. Stop sequence\n";
-            std::cout << "5. Exit program\n";
-            std::cout << "Select an option: ";
-            std::cout.flush();
-        }
+        std::cout << "\n\n--- Control Menu ---\n";
+        std::cout << "1. Set new base (current: " << base << ")\n";
+        std::cout << "2. Set new modulo (current: " << modulo << ")\n";
+        std::cout << "3. Start sequence\n";
+        std::cout << "4. Start/Stop animation\n";
+        std::cout << "5. Toggle loading bar (current: " << (showLoadingBar ? "ON" : "OFF") << ")\n";
+        std::cout << "6. Settings\n";
+        std::cout << "7. Exit program\n";
+        std::cout << "Select an option: ";
+        std::cout.flush();
 
         int choice;
         if (!(std::cin >> choice))
         {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            {
-                std::lock_guard<std::mutex> lock(outputMutex);
-                std::cout << "Invalid input. Please enter a number." << std::endl;
-            }
+            std::cout << "\033[31mInvalid input. Please enter a number.\033[0m\n";
             continue;
         }
 
@@ -145,15 +160,15 @@ void handleUserInput()
         {
             std::string newBase;
             std::cout << "Enter new base: ";
-            std::cout.flush();
             if (std::cin >> newBase)
             {
                 base = mpz_class(newBase);
-                std::cout << "Base updated to " << base << std::endl;
+                std::cout << "\nBase updated to " << base << "\n";
+                generateSequencePattern(); // Regenerate sequence automatically
             }
             else
             {
-                std::cout << "Invalid base input. Resetting input..." << std::endl;
+                std::cout << "\033[31mInvalid base input.\033[0m\n";
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
@@ -163,66 +178,119 @@ void handleUserInput()
         {
             std::string newModulo;
             std::cout << "Enter new modulo: ";
-            std::cout.flush();
             if (std::cin >> newModulo)
             {
                 modulo = mpz_class(newModulo);
-                std::cout << "Modulo updated to " << modulo << std::endl;
+                std::cout << "\nModulo updated to " << modulo << "\n";
+                generateSequencePattern(); // Regenerate sequence automatically
             }
             else
             {
-                std::cout << "Invalid modulo input. Please enter a positive integer." << std::endl;
+                std::cout << "\033[31mInvalid modulo input.\033[0m\n";
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             }
             break;
         }
         case 3:
-            generateSequencePattern(); // Update sequence pattern based on new base and modulo
             if (!sequencePattern.empty())
-            {                           // Ensure the pattern is valid before starting
-                sequenceRunning = true; // Start sequence and loading bar
-                std::cout << "Sequence started.\n";
+            {
+                std::cout << "\nDisplaying current sequence:\n";
+                for (size_t idx = 0; idx < sequencePattern.size(); ++idx)
+                {
+                    std::cout << "Term " << idx + 1 << ": " << sequencePattern[idx];
+                    if (showLoadingBar)
+                    {
+                        displayLoadingBar(idx + 1, sequencePattern.size());
+                    }
+                    std::cout << "\n";
+                }
             }
             else
             {
-                std::cout << "Error: Generated sequence pattern is empty. Check base and modulo.\n";
+                std::cout << "\nNo sequence generated yet. Please set base and modulo.\n";
             }
             break;
         case 4:
-            sequenceRunning = false; // Stop sequence and loading bar
-            std::cout << "Sequence stopped.\n";
+            if (!animationRunning)
+            {
+                std::cout << "\nStarting animation...\n";
+                std::thread animationThread(displayAnimation);
+                animationThread.detach(); // Run animation independently
+            }
+            else
+            {
+                animationRunning = false; // Stop animation
+            }
             break;
         case 5:
+            showLoadingBar = !showLoadingBar;
+            std::cout << "\nLoading bar " << (showLoadingBar ? "enabled" : "disabled") << ".\n";
+            break;
+        case 6:
+            handleSettingsMenu();
+            break;
+        case 7:
             running = false;
-            sequenceRunning = false;
-            {
-                std::lock_guard<std::mutex> lock(outputMutex);
-                std::cout << "Exiting program..." << std::endl;
-            }
+            animationRunning = false; // Ensure animation stops
+            std::cout << "\nExiting program...\n";
             return;
         default:
-            std::cout << "Invalid option. Please try again." << std::endl;
+            std::cout << "\n\033[31mInvalid option. Please try again.\033[0m\n";
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 
+// Settings Menu
+void handleSettingsMenu()
+{
+    while (true)
+    {
+        std::cout << "\n\n--- Settings Menu ---\n";
+        std::cout << "1. Set animation speed (current: " << animationSpeed << "ms)\n";
+        std::cout << "2. Back to main menu\n";
+        std::cout << "Select an option: ";
+        std::cout.flush();
+
+        int choice;
+        if (!(std::cin >> choice))
+        {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "\033[31mInvalid input. Please enter a number.\033[0m\n";
+            continue;
+        }
+
+        switch (choice)
+        {
+        case 1:
+            std::cout << "Enter new animation speed (ms): ";
+            if (std::cin >> animationSpeed && animationSpeed > 0)
+            {
+                std::cout << "\nAnimation speed set to " << animationSpeed << "ms.\n";
+            }
+            else
+            {
+                std::cout << "\033[31mInvalid speed input. Please enter a positive integer.\033[0m\n";
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            }
+            break;
+        case 2:
+            return; // Return to main menu
+        default:
+            std::cout << "\033[31mInvalid option. Please try again.\033[0m\n";
+        }
+    }
+}
+
+// Main program
 int main()
 {
-    std::cout << "Starting harmonic sequence...\n";
+    std::cout << "\n\nInitializing sequence with default base (" << base << ") and modulo (" << modulo << ")...\n";
+    generateSequencePattern(); // Generate initial sequence at load
 
-    // Start display and loading bar threads
-    std::thread displayThread(displayHarmonics);
-    std::thread loadingBarThread(displayLoadingBar);
-    std::thread inputThread(handleUserInput);
-
-    // Wait for threads to finish before closing the program
-    displayThread.join();
-    loadingBarThread.join();
-    inputThread.join();
-
-    std::cout << "Program terminated.\n";
+    handleUserInput();
+    std::cout << "\n\n\033[31mProgram terminated.\033[0m\n\n\n";
     return 0;
 }
