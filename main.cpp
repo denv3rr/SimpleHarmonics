@@ -227,8 +227,8 @@ static inline char shade(double v)  // v in [-1,1]
 static void drawOscilloscope(const Partials& P, int W, int H, double t)
 {
     // render
-    std::string out;
-    out.reserve((size_t)W * (size_t)H + H);
+    std::string buf;
+    buf.reserve((size_t)W * (size_t)H + H);
     int mid = H / 2;
 
     for (int y = 0; y < H; ++y)
@@ -244,21 +244,21 @@ static void drawOscilloscope(const Partials& P, int W, int H, double t)
             ysum = std::tanh(ysum);
             int row = mid - (int)std::lround( ysum * (H * 0.4) );
 
-            if (row == y && (x % 2 == 0)) out.push_back('#');
-            else if (y == mid)            out.push_back('-');
-            else                          out.push_back(' ');
+            if (row == y && (x % 2 == 0)) buf.push_back('#');
+            else if (y == mid)            buf.push_back('-');
+            else                          buf.push_back(' ');
         }
-        out.push_back('\n');
+        buf.push_back('\n');
     }
 
     // Visualizer footer
-    out += "Mode: \033[32mOscilloscope\033[0m  |  size \033[32m" + std::to_string(W) + "x" + std::to_string(H)
+    buf += "Mode: \033[32mOscilloscope\033[0m  |  size \033[32m" + std::to_string(W) + "x" + std::to_string(H)
         + "\033[0m  |  partials: \033[32m" + std::to_string((int)P.freq.size())
         + "\033[0m  |  Press \033[32m[4]\033[0m in menu to stop.\n";
 
     // Output to terminal and flush immediately
     ansi_clear();
-    std::cout << out;
+    std::cout << buf;
     std::cout.flush();
 }
 
