@@ -18,7 +18,7 @@ No external dependencies — just C++17.
   - Sequence inspection
   - Animation start/stop
   - Settings: animation speed, canvas size, and mode
-  - Toggle progress bar
+  - Toggle sequence creation report display
 
 ---
 
@@ -31,7 +31,7 @@ No external dependencies — just C++17.
 ### Compile
 
 ```bash
-g++ -std=c++17 main.cpp -O2 -o harmonic
+g++ -I ./ *.cpp -o harmonic
 ```
 
 ### Run
@@ -44,7 +44,7 @@ g++ -std=c++17 main.cpp -O2 -o harmonic
 When started, the program initializes with:
 
   - `base = 2`
-  - `modulo = 9`
+  - `modulo = 61`
 
 ---
 
@@ -64,11 +64,11 @@ When started, the program initializes with:
 
 ### Main
 
-  1. Set new base
-  2. Set new modulo
+  1. Set base
+  2. Set modulo
   3. Show sequence
-  4. Start/Stop harmonic visual
-  5. Toggle loading bar
+  4. Start/Stop visual
+  5. Toggle sequence report
   6. Settings (speed, size, mode)
   7. Exit
 
@@ -81,12 +81,12 @@ When started, the program initializes with:
 ### Controls
 
   - Switch modes via Settings
-  - Stop the animation from the menu with option `4`
+  - Start and stop the animation from the menu with option `4`
 
 ---
 
 ## Notes
 
-  - Performance: The visual runs at ~25 FPS by default.
+  - Performance: The visual runs at ~100 FPS by default.
   - Terminal size: Make sure your console window is large enough to fit the chosen canvas size.
   - Compatibility: On Windows, VT/ANSI sequences are auto-enabled.
