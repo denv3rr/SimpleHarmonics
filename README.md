@@ -38,14 +38,13 @@ g++ -std=c++17 main.cpp -O2 -o harmonic
 ### Run
 
   - `./harmonic`
-
-  - `.\harmonic.exe`
+  - `.\harmonic.exe` (Windows)
 
 ### Usage
 
 When started, the program initializes with:
-  - `base = 2`
 
+  - `base = 2`
   - `modulo = 9`
 
 ## Menus
