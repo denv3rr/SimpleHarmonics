@@ -19,22 +19,27 @@
 #include <cstdint>
 
 #ifdef _WIN32
-  #include <windows.h>
+    #include <windows.h>
 #endif
 
 // -------------------- Types & Globals --------------------
+
+// Aliases
 using u64 = unsigned long long;
 
+// Sequence default parameters
 static u64 g_base = 2;
-static u64 g_mod  = 9;
+static u64 g_mod  = 61;
 static std::vector<u64> g_seq;
 
+// Control flags
 static bool g_running = true;
 static bool g_showLoadingBar = true;
 
+// Animation default state at load time
 static std::atomic<bool> g_visualRunning{false};
 static int g_animMs = 10;        // frame time (ms)
-static int g_canvasW = 240;      // default width
+static int g_canvasW = 270;      // default width
 static int g_canvasH = 72;       // default height
 
 enum class Mode { Oscilloscope = 1, Lissajous = 2, Plasma = 3 };
@@ -93,6 +98,8 @@ static inline u64 mulmod(u64 a, u64 b, u64 m)
 #endif
 }
 
+// Modular exponentiation (base^exp % mod) using square-and-multiply
+// Handles large exponents efficiently and avoids overflow via mulmod
 static inline u64 modexp(u64 base, u64 exp, u64 mod)
 {
     if (mod == 0) return 0;              // undefined; guard
@@ -151,6 +158,8 @@ struct Partials {
     std::vector<double> phase0;  // initial phase
 };
 
+// Build partials from sequence values
+// Maps sequence values to partial parameters
 static Partials buildPartials(const std::vector<u64>& seq, int maxPartials)
 {
     // Build partials from sequence values
@@ -179,9 +188,12 @@ static Partials buildPartials(const std::vector<u64>& seq, int maxPartials)
     return p;
 }
 
+// -------------------- Animation view modes --------------------
+// RAMP: 69 levels of "brightness" from ' ' to '@'
 static const char* RAMP = " .'`^,:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
 static constexpr int RAMP_LEN = 69;
 
+// Map value in [-1,1] to RAMP character
 static inline char shade(double v)  // v in [-1,1]
 {
     double t = (v + 1.0) * 0.5;
@@ -191,6 +203,7 @@ static inline char shade(double v)  // v in [-1,1]
     return RAMP[idx];
 }
 
+// Draw oscilloscope view
 static void drawOscilloscope(const Partials& P, int W, int H, double t)
 {
     // render
@@ -227,6 +240,7 @@ static void drawOscilloscope(const Partials& P, int W, int H, double t)
     std::cout.flush();
 }
 
+// Draw Lissajous view
 static void drawLissajous(const Partials& P, int W, int H, double t)
 {
     std::string grid;
@@ -268,6 +282,7 @@ static void drawLissajous(const Partials& P, int W, int H, double t)
     std::cout.flush();
 }
 
+// Draw Plasma view
 static void drawPlasma(const Partials& P, int W, int H, double t)
 {
     std::string out;
@@ -301,6 +316,7 @@ static void drawPlasma(const Partials& P, int W, int H, double t)
     std::cout.flush();
 }
 
+// -------------------- Animation runner --------------------
 static void runHarmonicVisual()
 {
     if (g_seq.empty())
@@ -393,11 +409,11 @@ int main()
     while (g_running)
     {
         std::cout << "\n--- Control Menu ---\n";
-        std::cout << "1. Set new base (current: " << g_base << ")\n";
-        std::cout << "2. Set new modulo (current: " << g_mod << ")\n";
+        std::cout << "1. Set base (current: " << g_base << ")\n";
+        std::cout << "2. Set modulo (current: " << g_mod << ")\n";
         std::cout << "3. Show sequence\n";
-        std::cout << "4. Start/Stop harmonic visual\n";
-        std::cout << "5. Toggle loading bar (current: " << (g_showLoadingBar ? "ON" : "OFF") << ")\n";
+        std::cout << "4. Start/Stop visual\n";
+        std::cout << "5. Toggle sequence report (current: " << (g_showLoadingBar ? "ON" : "OFF") << ")\n";
         std::cout << "6. Settings\n";
         std::cout << "7. Exit\n";
         std::cout << "Select: ";
@@ -461,7 +477,7 @@ int main()
 
             case 5:
                 g_showLoadingBar = !g_showLoadingBar;
-                std::cout << "Loading bar " << (g_showLoadingBar ? "enabled" : "disabled") << ".\n";
+                std::cout << "Sequence report " << (g_showLoadingBar ? "enabled" : "disabled") << ".\n";
                 break;
 
             case 6:
