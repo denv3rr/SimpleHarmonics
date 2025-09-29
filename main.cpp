@@ -231,9 +231,9 @@ static void drawOscilloscope(const Partials& P, int W, int H, double t)
         buf.push_back('\n');
     }
 
-    buf += "Mode: Oscilloscope  |  size " + std::to_string(W) + "x" + std::to_string(H)
-        + "  |  partials: " + std::to_string((int)P.freq.size())
-        + "  |  Press [4] in menu to stop.\n";
+    buf += "Mode: \033[32mOscilloscope\033[0m  |  size \033[32m" + std::to_string(W) + "x" + std::to_string(H)
+        + "\033[0m  |  partials: \033[32m" + std::to_string((int)P.freq.size())
+        + "\033[0m  |  Press \033[32m[4]\033[0m in menu to stop.\n";
 
     ansi_clear();
     std::cout << buf;
@@ -273,9 +273,9 @@ static void drawLissajous(const Partials& P, int W, int H, double t)
         for (int x = 0; x < W; ++x) out.push_back(grid[(size_t)y * (size_t)W + (size_t)x]);
         out.push_back('\n');
     }
-    out += "Mode: Lissajous  |  size " + std::to_string(W) + "x" + std::to_string(H)
-        + "  |  partials: " + std::to_string((int)P.freq.size())
-        + "  |  Press [4] in menu to stop.\n";
+    out += "Mode: \033[32mLissajous\033[0m  |  size \033[32m" + std::to_string(W) + "x" + std::to_string(H)
+        + "\033[0m  |  partials: \033[32m" + std::to_string((int)P.freq.size())
+        + "\033[0m  |  Press \033[32m[4]\033[0m in menu to stop.\n";
 
     ansi_clear();
     std::cout << out;
@@ -307,9 +307,9 @@ static void drawPlasma(const Partials& P, int W, int H, double t)
         out.push_back('\n');
     }
 
-    out += "Mode: Plasma  |  size " + std::to_string(W) + "x" + std::to_string(H)
-        + "  |  partials: " + std::to_string((int)P.freq.size())
-        + "  |  Press [4] in menu to stop.\n";
+    out += "Mode: \033[32mPlasma\033[0m  |  size \033[32m" + std::to_string(W) + "x" + std::to_string(H)
+        + "\033[0m  |  partials: \033[32m" + std::to_string((int)P.freq.size())
+        + "\033[0m  |  Press \033[32m[4]\033[0m in menu to stop.\n";
 
     ansi_clear();
     std::cout << out;
@@ -321,8 +321,8 @@ static void runHarmonicVisual()
 {
     if (g_seq.empty())
     {
-        std::cout << "\nNo sequence yet—generating with base=" << g_base
-                  << " modulo=" << g_mod << "...\n";
+        std::cout << "\nNo sequence yet—generating with base=\033[32m" << g_base
+                  << "\033[0m modulo=\033[32m" << g_mod << "\033[0m...\n";
         generateSequence();
     }
     Partials P = buildPartials(g_seq, 24);
@@ -369,9 +369,9 @@ static void settingsMenu()
     while (true)
     {
         std::cout << "\n\n--- Settings ---\n";
-        std::cout << "1. Animation speed (ms)          [current: " << g_animMs << "]\n";
-        std::cout << "2. Canvas size (W H)             [current: " << g_canvasW << " " << g_canvasH << "]\n";
-        std::cout << "3. Mode (1=Osc, 2=Lis, 3=Plasma) [current: " << (int)g_mode << "]\n";
+        std::cout << "1. Animation speed (ms)          [current: \033[32m" << g_animMs << "\033[0m]\n";
+        std::cout << "2. Canvas size (W H)             [current: \033[32m" << g_canvasW << " " << g_canvasH << "\033[0m]\n";
+        std::cout << "3. Mode (1=Osc, 2=Lis, 3=Plasma) [current: \033[32m" << (int)g_mode << "\033[0m]\n";
         std::cout << "4. Back\n";
         std::cout << "Select: ";
 
@@ -403,17 +403,17 @@ static void settingsMenu()
 int main()
 {
     enableVT();
-    std::cout << "\nInitializing with base=" << g_base << " modulo=" << g_mod << " ...\n";
+    std::cout << "\nInitializing with base=\033[32m" << g_base << "\033[0m modulo=\033[32m" << g_mod << "\033[0m ...\n";
     generateSequence();
 
     while (g_running)
     {
         std::cout << "\n--- Control Menu ---\n";
-        std::cout << "1. Set base (current: " << g_base << ")\n";
-        std::cout << "2. Set modulo (current: " << g_mod << ")\n";
-        std::cout << "3. Show sequence\n";
+        std::cout << "1. Set base (current: \033[32m" << g_base << "\033[0m)\n";
+        std::cout << "2. Set modulo (current: \033[32m" << g_mod << "\033[0m)\n";
+        std::cout << "3. Show current sequence\n";
         std::cout << "4. Start/Stop visual\n";
-        std::cout << "5. Toggle sequence report (current: " << (g_showLoadingBar ? "ON" : "OFF") << ")\n";
+        std::cout << "5. Toggle sequence report (current: \033[32m" << (g_showLoadingBar ? "ON" : "OFF") << "\033[0m)\n";
         std::cout << "6. Settings\n";
         std::cout << "7. Exit\n";
         std::cout << "Select: ";
