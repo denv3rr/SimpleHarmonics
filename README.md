@@ -1,80 +1,78 @@
-# SimpleHarmonics
+# Harmonic Visualizer (C++)
 
-Exponentiation Sequence Creation
+A modular-exponentiation powered **visualizer** that generates repeating sequences and maps them into dynamic ASCII animations.  
+No external dependencies — just C++17.
 
-This program generates and visualizes modular exponentiation sequences.
+---
 
-<br><br>
+## Features
 
-- **Dynamic Sequence Generation**: Automatically generates sequences based on user-defined base and modulo values.
-- **Visualization/Animation**: Displays a scrolling wave pattern of the sequence.
-- **Note:** Using GNU MP Bignum Library for C++ (for precision integer values) and compiling with the following command:
-- **Note:** Using **<conio.h>** - this is a Windows-only header file for console i/o operations. This means this program is **not yet** portable across different operating systems. Updating in the future for wider use.
+- **Pure C++** (no GMP required)
+- **Cross-platform**: Windows, macOS, Linux
+- **Three visual modes**:
+  - Oscilloscope (waveform trace)
+  - Lissajous (dual-axis curve)
+  - Plasma (ASCII shaded field)
+- Interactive menu for:
+  - Base & modulo adjustment
+  - Sequence inspection
+  - Animation start/stop
+  - Settings: animation speed, canvas size, and mode
+  - Toggle progress bar
 
-<br><br>
+---
 
-## To Compile and Run
+## Build
 
-1. Clone repo
-  
-2. Run the following:
+### Prerequisites
 
-   - ```
-     g++ -I ./ *.cpp -lgmp -lgmpxx
-     ```
+- g++ 7+ (C++17 capable) or MSVC 2019+
+- ANSI-compatible terminal (Windows Terminal, macOS Terminal, Linux TTY)
 
-<br><br>
+### Compile
 
-## Menu Options
-
-### Main Menu
-
-```
---- Control Menu ---
-1. Set new base (current: 2)
-2. Set new modulo (current: 9)
-3. Start sequence
-4. Start/Stop animation
-5. Toggle loading bar (current: ON)
-6. Settings
-7. Exit program
-Select an option:
-
+```bash
+g++ -std=c++17 main.cpp -O2 -o harmonic
 ```
 
-### Settings Menu
+### Run
 
-```
---- Settings Menu ---
-1. Set animation speed (current: 50ms)
-2. Back to main menu
-Select an option:
+  - `./harmonic`
 
-```
+  - `.\harmonic.exe`
 
-<br><br>
+### Usage
 
-## Example Output
+When started, the program initializes with:
+  - `base = 2`
 
-### Sequence Display
-```
-Initializing sequence with default base (2) and modulo (9)...
+  - `modulo = 9`
 
-Generated Sequence Pattern:
-Term 1: 2 [=====>                        ] 16%
-Term 2: 4 [==========>                   ] 33%
-Term 3: 8 [===============>              ] 50%
-Term 4: 7 [====================>         ] 66%
-Term 5: 5 [=========================>    ] 83%
-Term 6: 1 [==============================] 100%
+## Menus
 
-```
-<br><br>
+### Main
 
-<div align="center">
-  <a href="https://seperet.com">
-    <img src=https://github.com/denv3rr/denv3rr/blob/main/Seperet_NightVision_Slam.gif/>
-  </a>
-</div>
+  1. Set new base
+  2. Set new modulo
+  3. Show sequence
+  4. Start/Stop harmonic visual
+  5. Toggle loading bar
+  6. Settings (speed, size, mode)
+  7. Exit
 
-[logo]: https://github.com/denv3rr/denv3rr/blob/main/Seperet_NightVision_Slam.gif "Seperet.com"
+### Settings
+
+  - Animation speed: set frame delay in ms (default 40)
+  - Canvas size: width & height (min 40x16)
+  - Mode: 1=Oscilloscope, 2=Lissajous, 3=Plasma
+
+### Controls
+
+  - Switch modes via Settings
+  - Stop the animation from the menu with option `4`
+
+## Notes
+
+  - Performance: The visual runs at ~25 FPS by default.
+  - Terminal size: Make sure your console window is large enough to fit the chosen canvas size.
+  - Compatibility: On Windows, VT/ANSI sequences are auto-enabled.

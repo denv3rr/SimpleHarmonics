@@ -1,0 +1,9 @@
+#ignore everything
+*
+*/
+
+#unignores
+!*.cpp
+!*.h
+!.gitignore
+!README.md
