@@ -22,12 +22,11 @@ No external dependencies — just C++17.
 
 ---
 
-## Build
+## Build and Run
 
 ### Prerequisites
 
 - g++ 7+ (C++17 capable) or MSVC 2019+
-- ANSI-compatible terminal (Windows Terminal, macOS Terminal, Linux TTY)
 
 ### Compile
 
@@ -46,6 +45,26 @@ When started, the program initializes with:
 
   - `base = 2`
   - `modulo = 9`
+
+---
+
+## Examples
+
+  - base = 2, mod = 11 → period 10
+
+  - base = 2, mod = 13 → period 12
+
+  - base = 2, mod = 19 → period 18 (2^9 ≡ −1, so full order 18)
+
+  - base = 2, mod = 29 → period 28 (2^14 ≡ −1 → full order 28)
+
+  - base = 2, mod = 61 → period 60 (2^30 ≡ −1 → full order 60)
+
+  - base = 3, mod = 31 → period 30 (3^15 ≡ −1 → full order 30)
+
+  - base = 5, mod = 23 → period 22 (5^11 ≡ −1 → full order 22)
+
+---
 
 ## Menus
 
@@ -69,6 +88,8 @@ When started, the program initializes with:
 
   - Switch modes via Settings
   - Stop the animation from the menu with option `4`
+
+---
 
 ## Notes
 

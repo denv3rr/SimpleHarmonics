@@ -121,6 +121,8 @@ static void generateSequence()
     std::unordered_set<u64> seen;
     u64 i = 1;
 
+    // Generate sequence until a repeat is found
+    std::cout << "\nGenerating sequence with base=" << g_base << " modulo=" << g_mod << " ...\n";
     while (true)
     {
         u64 v = modexp(g_base, i++, g_mod);
@@ -151,11 +153,13 @@ struct Partials {
 
 static Partials buildPartials(const std::vector<u64>& seq, int maxPartials)
 {
+    // Build partials from sequence values
     Partials p;
     if (seq.empty()) return p;
     int use = (int)std::min<size_t>(seq.size(), (size_t)std::max(3, maxPartials));
     p.freq.reserve(use); p.omega.reserve(use); p.amp.reserve(use); p.phase0.reserve(use);
 
+    // Map sequence values to partial parameters
     for (int k = 0; k < use; ++k)
     {
         u64 v = seq[k];
@@ -166,6 +170,7 @@ static Partials buildPartials(const std::vector<u64>& seq, int maxPartials)
         double a  = 1.0 / (1.0 + k * 0.8);
         double ph = (double)((v % 360ULL)) * M_PI / 180.0;
 
+        // Store
         p.freq.push_back(f);
         p.omega.push_back(w);
         p.amp.push_back(a);
@@ -188,6 +193,7 @@ static inline char shade(double v)  // v in [-1,1]
 
 static void drawOscilloscope(const Partials& P, int W, int H, double t)
 {
+    // render
     std::string buf;
     buf.reserve((size_t)W * (size_t)H + H);
     int mid = H / 2;
@@ -245,6 +251,7 @@ static void drawLissajous(const Partials& P, int W, int H, double t)
             grid[(size_t)cy * (size_t)W + (size_t)cx] = '*';
     }
 
+    // render
     std::string out;
     out.reserve((size_t)W * (size_t)H + H);
     for (int y = 0; y < H; ++y)
@@ -351,6 +358,8 @@ static void settingsMenu()
         std::cout << "3. Mode (1=Osc, 2=Lis, 3=Plasma) [current: " << (int)g_mode << "]\n";
         std::cout << "4. Back\n";
         std::cout << "Select: ";
+
+        // input validation
         int c; if (!(std::cin >> c)) { std::cin.clear(); std::cin.ignore(1<<20, '\n'); continue; }
 
         if (c == 1)
@@ -412,7 +421,7 @@ int main()
                     try {
                         unsigned long long v = std::stoull(b);
                         g_base = v;
-                        std::cout << "Base updated → " << g_base << "\n";
+                        std::cout << "Base updated -> " << g_base << "\n";
                         generateSequence();
                     } catch (...) { std::cout << "\x1b[31mInvalid base.\x1b[0m\n"; }
                 }
@@ -428,7 +437,7 @@ int main()
                         unsigned long long v = std::stoull(m);
                         if (v == 0ULL) { std::cout << "\x1b[31mModulo must be > 0.\x1b[0m\n"; break; }
                         g_mod = v;
-                        std::cout << "Modulo updated → " << g_mod << "\n";
+                        std::cout << "Modulo updated -> " << g_mod << "\n";
                         generateSequence();
                     } catch (...) { std::cout << "\x1b[31mInvalid modulo.\x1b[0m\n"; }
                 }
