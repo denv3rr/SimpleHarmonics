@@ -60,7 +60,7 @@ static inline void enableVT()
 static inline void ansi_clear()       { std::cout << "\x1b[2J\x1b[H"; }
 static inline void ansi_hide_cursor(bool hide) { std::cout << (hide ? "\x1b[?25l" : "\x1b[?25h"); }
 
-// -------------------- UI bits --------------------
+// -------------------- UI related --------------------
 static void displayLoadingBar(int progress, int total)
 {
     if (total <= 0) return;
