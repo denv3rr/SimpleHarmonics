@@ -33,9 +33,9 @@ static bool g_running = true;
 static bool g_showLoadingBar = true;
 
 static std::atomic<bool> g_visualRunning{false};
-static int g_animMs = 40;        // frame time (ms)
-static int g_canvasW = 120;      // default width
-static int g_canvasH = 36;       // default height
+static int g_animMs = 10;        // frame time (ms)
+static int g_canvasW = 240;      // default width
+static int g_canvasH = 72;       // default height
 
 enum class Mode { Oscilloscope = 1, Lissajous = 2, Plasma = 3 };
 static Mode g_mode = Mode::Oscilloscope;
