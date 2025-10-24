@@ -104,7 +104,8 @@ When started, the program initializes with:
   - Partials: 24
 
 **Single frame snapshot during runtime:**
-
+<details>
+  
 ```
 QUuf)]~!I:^`''....          .......                                   ......''''''''''''''''```^^,,:
 QYut)?~!;,^`''....          .......                                   ......'''''''''''''''''```^,,:
@@ -407,5 +408,6 @@ BBB%8WMokqOJznf\)1}[]]]][[}}{{1111{}[]-_~<i!I;::,^^^^``^^^^,:;Il!>~_]}1(\tjrnnuv
 @@@@@@@BB%8&M#oakbdppqqqppddbbbbbbbdpqwZ0LJXvnjt\()1{{{{1)(\trncYC0Zqdbhao**###MMMMMMMMMMMMWW&&&88%%
 @@@@@@@BB%8&M#oakbdpppqpppddbbbbbbbdpqwZ0LJXcnrt\|)1{{{{1)|\fruzUC0mqdkhao**##MMMMMMMMMMMMWWW&&888%%
 Mode: Plasma  |  size 100x300  |  partials: 24  |  Press [4] in menu to stop.
-
 ```
+
+</details>
