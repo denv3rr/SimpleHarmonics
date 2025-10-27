@@ -1,7 +1,4 @@
-# Harmonic Visualizer (C++)
-
-A modular-exponentiation powered **visualizer** that generates repeating sequences and maps them into dynamic ASCII animations.  
-No external dependencies — just C++17.
+A modular-exponentiation **visualizer** that generates repeating sequences and maps them into dynamic ASCII animations.
 
 ---
 
