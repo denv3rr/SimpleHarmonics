@@ -28,13 +28,13 @@ A modular-exponentiation **visualizer** that generates repeating sequences and m
 ### Compile
 
 ```bash
-g++ -I ./ *.cpp -o harmonic
+g++ -I ./ *.cpp -o mod-exp
 ```
 
 ### Run
 
-  - `./harmonic`
-  - `.\harmonic.exe` (Windows)
+  - `./mod-exp` (Linux)
+  - `.\mod-exp.exe` (Windows)
 
 ### Usage
 
